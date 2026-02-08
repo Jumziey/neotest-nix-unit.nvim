@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  nix-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v24
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Nix flake check
+        run: nix flake check
+      - name: Nix build
+        run: nix build
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v24
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Check formatting with stylua
+        run: nix develop -c stylua --check lua/
+      - name: Lint with luacheck
+        run: nix develop -c luacheck lua/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v24
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Run plenary tests
+        run: |
+          nix develop -c nvim --headless -u testrc_init.lua -c "PlenaryBustedDirectory spec {init = 'testrc_init.lua'}"

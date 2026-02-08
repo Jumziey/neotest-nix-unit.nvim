@@ -89,12 +89,8 @@ local function remove_duplicate_nodes(positions)
   local seen_ranges = {}
   for _, position in ipairs(positions) do
     -- Serialize range to string for use as table key
-    local range_key = string.format("%d-%d-%d-%d",
-      position.range[1],
-      position.range[2],
-      position.range[3],
-      position.range[4]
-    )
+    local range_key =
+      string.format("%d-%d-%d-%d", position.range[1], position.range[2], position.range[3], position.range[4])
     -- Only add if we haven't seen this range before
     if not seen_ranges[range_key] then
       seen_ranges[range_key] = true

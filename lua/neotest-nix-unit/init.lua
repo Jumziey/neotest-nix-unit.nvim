@@ -7,13 +7,7 @@ local adapter = { name = "neotest-nix-unit" }
 -- See: https://github.com/nvim-neotest/neotest/blob/master/lua/neotest/adapters/interface.lua
 
 function adapter.root(path)
-  return lib.files.match_root_pattern(
-    "*.test.nix",
-    "*.tests.nix",
-    "flake.nix",
-    "default.nix",
-    "shell.nix"
-  )(path)
+  return lib.files.match_root_pattern("*.test.nix", "*.tests.nix", "flake.nix", "default.nix", "shell.nix")(path)
 end
 
 function adapter.is_test_file(file_path)
@@ -22,7 +16,10 @@ end
 
 function adapter.filter_dir(name, _, _)
   return not vim.tbl_contains({
-    ".git", "node_modules", "result", ".direnv"
+    ".git",
+    "node_modules",
+    "result",
+    ".direnv",
   }, name)
 end
 
@@ -87,7 +84,7 @@ local function make_run_spec(cwd, nix_unit_args)
   return {
     command = command,
     cwd = cwd,
-    env = { NO_COLOR = "1" }
+    env = { NO_COLOR = "1" },
   }
 end
 
@@ -101,24 +98,21 @@ function adapter.build_spec(args)
     local test_name = data.name
     local expr = string.format("{ %s = (import ./%s).%s; }", test_name, file_name, test_name)
     return make_run_spec(vim.fn.fnamemodify(file_path, ":h"), { "--expr", expr })
-
   elseif data.type == "namespace" then
     local file_path = data.path
     local file_name = vim.fn.fnamemodify(file_path, ":t")
     local namespace = data.name
     local expr = string.format("(import ./%s).%s", file_name, namespace)
     return make_run_spec(vim.fn.fnamemodify(file_path, ":h"), { "--expr", expr })
-
   elseif data.type == "file" then
     local file_path = data.path
     local file_name = vim.fn.fnamemodify(file_path, ":t")
     return make_run_spec(vim.fn.fnamemodify(file_path, ":h"), { file_name })
-
   elseif data.type == "dir" then
     local run_specs = {}
     local test_files = vim.list_extend(
-      vim.fn.glob(data.path .. '/*.tests.nix', false, true),
-      vim.fn.glob(data.path .. '/*.test.nix', false, true)
+      vim.fn.glob(data.path .. "/*.tests.nix", false, true),
+      vim.fn.glob(data.path .. "/*.test.nix", false, true)
     )
     for _, file_path in ipairs(test_files) do
       local fn = vim.fn.fnamemodify(file_path, ":t")
@@ -137,7 +131,7 @@ local function parse_test_specific_status_line(line, status, regexp)
   end
   return {
     status = status,
-    test_name = test_name
+    test_name = test_name,
   }
 end
 
@@ -145,9 +139,9 @@ local function parse_test_status_line(line)
   if not line then
     return false
   end
-  return parse_test_specific_status_line(line, "passed", "^✅%s+(.+)$") or
-    parse_test_specific_status_line(line, "failed", "^❌%s+(.+)$") or
-    parse_test_specific_status_line(line, "failed", "^☢️%s+(.+)$")
+  return parse_test_specific_status_line(line, "passed", "^✅%s+(.+)$")
+    or parse_test_specific_status_line(line, "failed", "^❌%s+(.+)$")
+    or parse_test_specific_status_line(line, "failed", "^☢️%s+(.+)$")
 end
 
 local function remove_initial_nix_warnings(lines)
@@ -179,7 +173,7 @@ local function extract_error_info(error_output)
   if error_message and line_number then
     return {
       message = error_message,
-      line = tonumber(line_number)
+      line = tonumber(line_number),
     }
   end
 
@@ -209,8 +203,8 @@ function adapter.results(_, result, tree)
     return {
       [tree:data().id] = {
         status = "failed",
-        errors = { errors }
-      }
+        errors = { errors },
+      },
     }
   end
 
@@ -241,4 +235,3 @@ function adapter.results(_, result, tree)
 end
 
 return adapter
-

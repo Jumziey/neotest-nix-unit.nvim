@@ -38,31 +38,27 @@ install_plugin("https://github.com/nvim-treesitter/nvim-treesitter", "v0.10.0")
 
 register_local_plugin()
 
--- Ensure nix treesitter parser is installed
-local parser_dir = tempdir .. "/treesitter-parsers"
-vim.fn.mkdir(parser_dir, "p")
-vim.opt.runtimepath:append(parser_dir)
-
+-- Ensure nix treesitter parser is installed synchronously before tests
 local function ensure_nix_parser()
-  local ok, parsers = pcall(require, "nvim-treesitter.parsers")
-  if not ok then
-    return
-  end
-
-  local parser_config = parsers.get_parser_configs()
-  if not parser_config.nix then
-    return
-  end
-
   -- Check if parser is already available
   local has_parser = pcall(vim.treesitter.language.inspect, "nix")
   if has_parser then
     return
   end
 
-  -- Install the nix parser
+  -- Set up nvim-treesitter and install nix parser
+  local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
+  if not ok then
+    print("Warning: nvim-treesitter.configs not available")
+    return
+  end
+
+  ts_configs.setup({
+    ensure_installed = { "nix" },
+    sync_install = true,
+  })
+
   print("Installing nix treesitter parser...")
-  vim.cmd("TSInstallSync! nix")
 end
 
 ensure_nix_parser()
